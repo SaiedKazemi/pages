@@ -1,0 +1,55 @@
+<h1 id="concepts">Concepts</h1>
+<h2 id="agent">Agent</h2>
+<p>An agent performs measurements. It receives a list of probes to send
+and uses <a href="https://github.com/dioptra-io/caracal">caracal</a> to
+send the probes and capture the replies. It is implemented as Python
+application that loops on a Redis queue and uploads the results to an S3
+bucket.</p>
+<p>The resources required to run an agent are minimal and depends mostly
+on the desired probing rate. A minimum of 1 CPU and 512 MB of memory are
+required. To achieve a rate of 100k packets per second, we recommend
+at-least 2 CPU.</p>
+<p>If you’re running an agent in the cloud, avoid burstable instances
+since the agent will exhaust the CPU credits very quickly and will
+become very slow.</p>
+<h2 id="measurement">Measurement</h2>
+<p>A measurement is defined by a tool and a list of measurement
+agents.</p>
+<h2 id="measurement-agent">Measurement agent</h2>
+<p>A measurement agent is defined by an agent, a target list and tool
+parameters specific to the agent.</p>
+<h2 id="target-list">Target list</h2>
+<p>A target list is a comma-delimited list of networks to probe. Each
+line of the file must be like</p>
+<pre><code>target,protocol,min_ttl,max_ttl,n_initial_flows</code></pre>
+<p>where the target is a IPv4/IPv6 prefix or IPv4/IPv6 address. The
+prococol can be <code>icmp</code>, <code>icmp6</code> or
+<code>udp</code>. The file name must end with <code>.csv</code>.</p>
+<p>For example:</p>
+<pre><code>0.0.0.0/0,udp,2,32,1
+8.8.8.0/24,icmp,2,32,6
+2001:4860:4860::8888,icmp6,2,32,6</code></pre>
+<p>If the prefix length is ignored, /24 or /128 is assumed.</p>
+<p>Some tools offer the <code>prefix_len_v4</code> and
+<code>prefix_len_v6</code> parameters which allows to split the
+specified networks and keep the target list short. For instance, if
+<code>prefix_len_v4=24</code>, then <code>0.0.0.0/0</code> will be split
+into the 16 millions networks
+<code>0.0.0.0/24,...,255.255.255.0/24</code>.</p>
+<h2 id="tool">Tool</h2>
+<p>A tool defines which probes should be sent based on a target list and
+the results of a previous measurement round. Examples of such tools are
+Diamond-Miner, Yarrp or ping.</p>
+<p>A better name would probably have been an <em>algorithm</em>, to
+avoid confusion with the actual probing tool that is used, <a
+href="https://github.com/dioptra-io/caracal">caracal</a>.</p>
+<h2 id="worker">Worker</h2>
+<p>A worker coordinates measurement agents. It runs the tool to get the
+list of probes to send, it sends this list to the agent, and it waits
+for the results. It is implemented as <a
+href="https://dramatiq.io">Dramatiq</a> actors and uses Redis and S3 to
+exchange data with the agents.</p>
+<p>The resources required to run a worker depends on the tool and on the
+number of concurrent measurement agents. To run Diamond-Miner on
+<code>0.0.0.0/0</code> with a single agent, we recommend at-least 32 GB
+of memory and 8 CPUs.</p>

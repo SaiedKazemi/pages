@@ -1,0 +1,70 @@
+<h1 id="http-api">HTTP API</h1>
+<p>Iris is meant to be controlled through an HTTP API. The API is
+documented with Swagger on the <code>/docs</code> endpoint. A
+documentation of the API is publicly available at <a
+href="https://api.iris.dioptra.io/docs/">https://api.iris.dioptra.io/docs/</a>.</p>
+<p>On this page we document specific tips for using the API.</p>
+<h2 id="registering">Registering</h2>
+<h3 id="on-iris.dioptra.io">On iris.dioptra.io</h3>
+<p>To register on Iris public instance, you must go through <a
+href="https://iris.dioptra.io">iris.dioptra.io</a>. Upon registration,
+you will be invited to sign a license and send it to our team for
+approval. Once your account is approved you will be able to access
+public Iris data.</p>
+<h3 id="on-a-private-instance">On a private instance</h3>
+<p>To register on a private instance, you can use the
+<code>/auth/register</code> endpoint:</p>
+<pre><code>curl -X POST \
+    -H &#39;Content-Type: application/json&#39; \
+    -d &#39;{&quot;firstname&quot;: &quot;First&quot;, &quot;lastname&quot;: &quot;Last&quot;, &quot;email&quot;: &quot;a@b.c&quot;, &quot;password&quot;: &quot;abc&quot;}&#39; \
+    https://api.dev.iris.dioptra.io/auth/register</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;23ec99b5-f259-4732-b121-d012b686e37a&quot;</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;a@b.c&quot;</span><span class="fu">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;is_active&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;is_superuser&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;is_verified&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;firstname&quot;</span><span class="fu">:</span> <span class="st">&quot;First&quot;</span><span class="fu">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;lastname&quot;</span><span class="fu">:</span> <span class="st">&quot;Last&quot;</span><span class="fu">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;probing_enabled&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;probing_limit&quot;</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;allow_tag_reserved&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;allow_tag_public&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;creation_time&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-08-17T14:24:22.495581&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>An administrator can then set <code>is_verified</code> and
+<code>probing_enabled</code> to true by issuing a PATCH query against
+the <code>/users/:id</code> endpoint.</p>
+<h2 id="iris-client">iris-client</h2>
+<p>To make it easier to use the Iris API from Python code, you can use
+the <a href="https://github.com/dioptra-io/iris-client">iris-client</a>
+library. It is implemented on top of <a
+href="https://github.com/encode/httpx">httpx</a> and has sync and async
+interfaces.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install dioptra-iris-client</span></code></pre></div>
+<p>To avoid specifying the credentials in the code, you can use
+environment variables, or a configuration file:</p>
+<p><code>json title="~/.config/iris/credentials.json" {     "base_url": "https://api.iris.dioptra.io",     "username": "admin@example.org",     "password": "admin" }</code></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> iris_client <span class="im">import</span> IrisClient</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> IrisClient() <span class="im">as</span> iris:</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    iris.<span class="bu">all</span>(<span class="st">&quot;/measurements/&quot;</span>, params<span class="op">=</span>{<span class="st">&quot;tag&quot;</span>: <span class="st">&quot;collection:public&quot;</span>, <span class="st">&quot;only_mine&quot;</span>: <span class="va">False</span>})</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    iris.post(<span class="st">&quot;/measurements/&quot;</span>, json<span class="op">=</span>{<span class="st">&quot;tool&quot;</span>: <span class="st">&quot;diamond-miner&quot;</span>, <span class="st">&quot;agents&quot;</span>: <span class="st">&quot;...&quot;</span>})</span></code></pre></div>
+<p>For more information, refer to the documentation of the library.</p>
+<h2 id="pych-client">pych-client</h2>
+<p>To access Iris data hosted on ClickHouse, you can use the <a
+href="https://github.com/dioptra-io/pych-client">pych-client</a> library
+in combination with iris-client.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pych-client</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> iris_client <span class="im">import</span> IrisClient</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pych_client <span class="im">import</span> ClickHouseClient</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> IrisClient() <span class="im">as</span> iris:</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    services <span class="op">=</span> iris.get(<span class="st">&quot;/users/me/services&quot;</span>).json()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> ClickHouseClient(<span class="op">**</span>services[<span class="st">&quot;clickhouse&quot;</span>]) <span class="im">as</span> clickhouse:</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(clickhouse.json(<span class="st">&quot;SHOW TABLES&quot;</span>))</span></code></pre></div>

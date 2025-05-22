@@ -1,0 +1,77 @@
+<h1 id="development">Development</h1>
+<p>Here are some guidelines to make your life easier during the
+development process.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>To develop on Iris you need a Python 3.10+ interpreter and
+Docker.</p>
+<p>Iris services and their dependencies are hosted behind a Traefik
+reverse-proxy. To be able to access them from your own machine, you need
+to add the following entries to <a
+href="file:///etc/hosts"><code>/etc/hosts</code></a>:</p>
+<pre><code>127.0.0.1 api.docker.localhost
+127.0.0.1 clickhouse.docker.localhost
+127.0.0.1 minio.docker.localhost
+127.0.0.1 minio-console.docker.localhost
+127.0.0.1 postgres.docker.localhost
+127.0.0.1 redis.docker.localhost
+127.0.0.1 traefik.docker.localhost</code></pre>
+<p>You also need caracal in your $PATH if you intend to run Iris
+locally:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use caracal-macos-amd64 for macOS</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-L</span> https://github.com/dioptra-io/caracal/releases/download/v0.15.3/caracal-linux-amd64 <span class="op">&gt;</span> /usr/bin/caracal</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x /usr/bin/caracal</span></code></pre></div>
+<h2 id="running-iris">Running Iris</h2>
+<h3 id="locally">Locally</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the virtual environment (only once)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> install</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the external services</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">--detach</span> traefik clickhouse minio postgres redis</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Seed the database</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run alembic upgrade head</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch Iris</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run python <span class="at">-m</span> iris.api</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run python <span class="at">-m</span> iris.agent</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run python <span class="at">-m</span> iris.worker</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop the external services</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose down</span></code></pre></div>
+<p>The API documentation will be available on
+http://127.0.0.1:8000/docs.</p>
+<h3 id="on-docker">On Docker</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch Iris and the external services</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up <span class="at">--detach</span> <span class="at">--build</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Seed the database</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run alembic upgrade head</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop Iris and the external services</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> down</span></code></pre></div>
+<p>The API documentation will be available on
+http://api.docker.localhost/docs.<br />
+By default, the admin user is <code>admin@example.org</code> and the
+password is <code>admin</code>.</p>
+<h2 id="tests">Tests</h2>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Excluding privileged tests</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run pytest</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Including privileged tests (`@superuser` decorator)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run sudo pytest</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Do not delete test artifacts (see `conftest.py`)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">IRIS_TEST_CLEANUP</span><span class="op">=</span>0</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run pytest</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate a coverage report</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run pytest <span class="at">--cov</span><span class="op">=</span>iris <span class="at">--cov-report</span><span class="op">=</span>html</span></code></pre></div>
+<h2 id="pre-commit">pre-commit</h2>
+<p>Please use the <a href="https://pre-commit.com">pre-commit</a> hooks
+to format and lint the code before committing it.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run pre-commit install</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># On commit</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Manually</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="ex">poetry</span> run pre-commit run <span class="at">--all-files</span></span></code></pre></div>
+<h2 id="release">Release</h2>
+<p>Please use <a
+href="https://pypi.org/project/bumpversion/0.6.0/">bumpversion</a> to
+conduct the releases. The version bump will automatically create a new
+commit associated with a tag.</p>
